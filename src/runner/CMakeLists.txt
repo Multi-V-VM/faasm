@@ -10,6 +10,7 @@ target_link_libraries(runner_lib PUBLIC
     faasm::wamrmodule
     faasm::upload_lib
     faasm::system
+    MVVM_export
 )
 target_include_directories(runner_lib PRIVATE ${FAASM_INCLUDE_DIR}/runner)
 

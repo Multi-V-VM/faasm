@@ -8,8 +8,19 @@
 #include <type_traits>
 
 #include <aot_export.h>
+#include <wamr.h>
 #include <wasm_export.h>
+WAMRInstance* wamr;
+#include <wamr_read_write.h>
+FwriteStream *writer;
 
+void serialize_to_file(WASMExecEnv* instance)
+{
+    auto a = new WAMRExecEnv();
+    dump(a, instance);
+
+    struct_pack::serialize_to(*writer, *a);
+}
 namespace wasm {
 std::vector<uint8_t> wamrCodegen(std::vector<uint8_t>& wasmBytesIn, bool isSgx)
 {
@@ -51,7 +62,7 @@ std::vector<uint8_t> wamrCodegen(std::vector<uint8_t>& wasmBytesIn, bool isSgx)
 
     using aot_comp_data = std::pointer_traits<aot_comp_data_t>::element_type;
     std::unique_ptr<aot_comp_data, decltype(&aot_destroy_comp_data)>
-      compileData(aot_create_comp_data(wasmModule.get()),
+      compileData(aot_create_comp_data(((WASMModule *)wasmModule.get())),
                   &aot_destroy_comp_data);
     if (compileData == nullptr) {
         SPDLOG_ERROR("WAMR failed to create compilation data: {}",
@@ -72,6 +83,7 @@ std::vector<uint8_t> wamrCodegen(std::vector<uint8_t>& wasmBytesIn, bool isSgx)
     option.enable_ref_types = true;
     option.is_jit_mode = false;
     option.enable_simd = true;
+    option.enable_checkpoint = true;
 
     if (isSgx) {
         option.size_level = 1;

@@ -3,6 +3,7 @@
 #include <string>
 #include <unordered_map>
 #include <vector>
+#include <stdint.h>
 
 // Defined in wasi-libc/libc-bottom-half/sources/getcwd.c
 #define WASI_LIBC_CWD "/"

@@ -48,7 +48,6 @@ conan_cmake_autodetect(FAABRIC_CONAN_SETTINGS)
 conan_cmake_install(PATH_OR_REFERENCE .
                     BUILD outdated
                     UPDATE
-                    REMOTE conancenter
                     PROFILE_HOST ${CMAKE_CURRENT_LIST_DIR}/../faabric/conan-profile.txt
                     PROFILE_BUILD ${CMAKE_CURRENT_LIST_DIR}/../faabric/conan-profile.txt
                     SETTINGS ${FAABRIC_CONAN_SETTINGS}
@@ -115,8 +114,8 @@ FetchContent_Declare(wavm_ext
 )
 
 FetchContent_Declare(wamr_ext
-    GIT_REPOSITORY "https://github.com/faasm/wasm-micro-runtime"
-    GIT_TAG "5e9dc3c7eb33167389d99b7e5851dc55b5911d33"
+    GIT_REPOSITORY "https://github.com/Multi-V-VM/MVVM.git"
+    GIT_TAG "f92eee315352e0720791546fc21c064352aa0f1e"
 )
 
 # WAMR and WAVM both link to LLVM
@@ -131,4 +130,5 @@ FetchContent_GetProperties(wavm_ext SOURCE_DIR FAASM_WAVM_SOURCE_DIR)
 message(STATUS FAASM_WAVM_SOURCE_DIR ${FAASM_WAVM_SOURCE_DIR})
 
 FetchContent_GetProperties(wamr_ext SOURCE_DIR WAMR_ROOT_DIR)
+set(WAMR_ROOT_DIR ${WAMR_ROOT_DIR}/lib/wasm-micro-runtime)
 message(STATUS WAMR_ROOT_DIR ${WAMR_ROOT_DIR})

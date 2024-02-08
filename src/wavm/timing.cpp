@@ -94,31 +94,8 @@ WAVM_DEFINE_INTRINSIC_FUNCTION(wasi,
 
     for (int i = 0; i < nSubs; i++) {
         __wasi_subscription_t* thisSub = &inEvents[i];
-
-        if (thisSub->type == __WASI_EVENTTYPE_CLOCK) {
-            // This is a timing event like a sleep
-            uint64_t timeoutNanos = thisSub->u.clock.timeout;
-            int clockType = 0;
-            if (thisSub->u.clock.clock_id == __WASI_CLOCK_MONOTONIC) {
-                clockType = CLOCK_MONOTONIC;
-            } else if (thisSub->u.clock.clock_id == __WASI_CLOCK_REALTIME) {
-                clockType = CLOCK_REALTIME;
-            } else {
-                throw std::runtime_error("Unimplemented clock type");
-            }
-
-            // Do the sleep
-            timespec t{};
-            faabric::util::nanosToTimespec(timeoutNanos, &t);
-            clock_nanosleep(clockType, 0, &t, nullptr);
-        } else {
-            throw std::runtime_error("Unimplemented event type");
-        }
-
         // Say that the event has occurred
         __wasi_event_t* thisEvent = &outEvents[i];
-        thisEvent->type = thisSub->type;
-        thisEvent->error = __WASI_ESUCCESS;
     }
 
     // Write the result

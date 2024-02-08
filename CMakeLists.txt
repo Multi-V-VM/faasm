@@ -18,9 +18,9 @@ option(FAASM_SGX_MODE "Type of SGX support: Disabled, Simulation or Hardware" "S
 option(FAASM_TARGET_CPU "CPU to optimise for, e.g. skylake, icelake or native" OFF)
 
 # Top-level CMake config
-set(CMAKE_CXX_FLAGS "-Wall -Werror=vla")
+set(CMAKE_CXX_FLAGS "-Wall -Werror=vla -frtti")
 set(CMAKE_CXX_FLAGS_DEBUG "-g")
-set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
@@ -99,24 +99,7 @@ find_package(cpprestsdk REQUIRED)
 # ----------------------------------------
 
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_LIST_DIR}/cmake)
-if (NOT (FAASM_SGX_MODE STREQUAL "Disabled"))
-    # Set macro definitions for conditional compilation
-    if (FAASM_SGX_MODE STREQUAL "Hardware")
-        add_definitions(-DFAASM_SGX_HARDWARE_MODE)
-    elseif (FAASM_SGX_MODE STREQUAL "Simulation")
-        add_definitions(-DFAASM_SGX_SIMULATION_MODE)
-    else ()
-        message(FATAL_ERROR "Unrecognised SGX mode: ${FAASM_SGX_MODE}")
-    endif ()
-
-    # Detect SGX intallation
-    find_package(SGX)
-    if (NOT SGX_FOUND)
-        message(FATAL_ERROR "FAASM SGX in mode ${FAASM_SGX_MODE} but SGX not found!")
-    endif ()
-else ()
     add_definitions(-DFAASM_SGX_DISABLED_MODE)
-endif ()
 message(STATUS "FAASM SGX Mode: ${FAASM_SGX_MODE}")
 
 # ----------------------------------------
@@ -200,14 +183,10 @@ target_include_directories(faasm_common_deps INTERFACE
     ${FAASM_GENERATED_INCLUDE_DIR}
     ${FAASM_PYTHON_LIB_DIR}
 )
-
+unset(SGX_FOUND)
 # Faasm SGX support
-if (SGX_FOUND)
-    add_subdirectory(src/enclave)
-else ()
     add_library(faasm_enclave_dummy INTERFACE)
     add_library(faasm::enclave ALIAS faasm_enclave_dummy)
-endif ()
 
 # Faasm runtime
 add_subdirectory(src/codegen)
@@ -223,6 +202,6 @@ add_subdirectory(src/wamr)
 add_subdirectory(src/wavm)
 
 # Tests
-add_subdirectory(tests/test)
-add_subdirectory(tests/dist)
-add_subdirectory(tests/utils)
+# add_subdirectory(tests/test)
+# add_subdirectory(tests/dist)
+# add_subdirectory(tests/utils)

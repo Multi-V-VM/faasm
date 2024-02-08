@@ -5,7 +5,7 @@
 #include <wasm_runtime_common.h>
 
 #include <setjmp.h>
-
+#include <wamr.h>
 #define ERROR_BUFFER_SIZE 256
 #define STACK_SIZE_KB 8192
 #define HEAP_SIZE_KB 8192
@@ -78,6 +78,7 @@ class WAMRWasmModule final
     char errorBuffer[ERROR_BUFFER_SIZE];
 
     std::vector<uint8_t> wasmBytes;
+    WAMRInstance* wamr_;
     WASMModuleCommon* wasmModule;
     WASMModuleInstanceCommon* moduleInstance;
 

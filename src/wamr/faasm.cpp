@@ -106,6 +106,7 @@ static void __faasm_migrate_point_wrapper(wasm_exec_env_t execEnv,
                                           int32_t funcArg)
 {
     SPDLOG_DEBUG("S - faasm_migrate_point {} {}", wasmFuncPtr, funcArg);
+    // MVVM serialize_to_file
 
     wasm::doMigrationPoint(wasmFuncPtr, std::to_string(funcArg));
 }

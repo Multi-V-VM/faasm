@@ -3,31 +3,6 @@
 # may break Faasm.
 
 # Set target platform details
-set(WAMR_BUILD_PLATFORM "linux")
-set(WAMR_BUILD_TARGET X86_64)
-set(WAMR_BUILD_SPEC_TEST 0)
-
-# Top-level Faasm flag for WAMR
-add_definitions(-DWAMR_FAASM=1)
-
-# Set AOT mode and JIT for code generation
-set(WAMR_BUILD_INTERPRETER 1)
-set(WAMR_BUILD_AOT 1)
-set(WAMR_BUILD_JIT 1)
-set(WAMR_BUILD_LAZY_JIT 0)
-
-# Set libraries
-set(WAMR_BUILD_LIBC_BUILTIN 1)
-set(WAMR_BUILD_LIBC_WASI 1)
-set(WAMR_BUILD_LIB_PTHREAD 0)
-
-# WAMR features
-set(WAMR_BUILD_SIMD 1)
-
-set(WAMR_BUILD_MULTI_MODULE 1)
-# If bulk memory set, WAMR allocates one single page, breaking our brk memory
-# management model
-set(WAMR_BUILD_BULK_MEMORY 0)
 
 # We must enable WAMR hardware bounds check here, otherwise WAMR uses malloc to
 # allocate memory, which is not page-aligned. This seems like a blunt instrument
@@ -36,33 +11,52 @@ set(WAMR_BUILD_BULK_MEMORY 0)
 set(WAMR_DISABLE_HW_BOUND_CHECK 0)
 # This definition prevents a buffer underflow during code generation
 add_definitions(-DWASM_ENABLE_WAMR_COMPILER=1)
+set(WAMR_BUILD_PLATFORM "linux")
+set(WAMR_BUILD_INTERP 1)
+set(WAMR_BUILD_AOT 1)
+set(WAMR_BUILD_JIT 1)
+set(WAMR_BUILD_DEBUG_INTERP 0)
+set(WAMR_BUILD_DEBUG_AOT 0)
+set(WAMR_BUILD_FAST_JIT 0)
+set(WAMR_BUILD_WASI_NN 0)
+set(WAMR_BUILD_LIBC_BUILTIN 1)
+set(WAMR_BUILD_LIBC_WASI 1)
+set(WAMR_BUILD_DUMP_CALL_STACK 1)
+set(WAMR_BUILD_FAST_INTERP 0)
+set(WAMR_BUILD_SHARED_MEMORY 1)
+set(WAMR_BUILD_BULK_MEMORY 1)
+set(WAMR_BUILD_REF_TYPES 0)
+set(WAMR_BUILD_SIMD 1)
+set(WAMR_BUILD_CUSTOM_NAME_SECTION 1)
+set(WAMR_BUILD_CHECKPOINT_RESTORE 1)
+set(WAMR_DISABLE_HW_BOUND_CHECK 1)
 
-include (${WAMR_ROOT_DIR}/build-scripts/runtime_lib.cmake)
+include(${WAMR_ROOT_DIR}/build-scripts/runtime_lib.cmake)
+include_directories (${WAMR_ROOT_DIR}/../../ ${WAMR_ROOT_DIR}/../../include)
+include_directories(${WAMR_ROOT_DIR}/../../include ${WAMR_ROOT_DIR}/core/shared/utils/uncommon/ ${WAMR_ROOT_DIR}/../../core/iwasm/aot ${WAMR_ROOT_DIR}/../../lib/yalantinglibs/include ${LLVM_INCLUDE_DIRS})
 # 13/09/2021 - Setting the CMake flag includes the code required to run
 # code generation, but the pre-processor macro introduces LLVM errors. It is
 # safe to disable as we actually don't run JITed code.
 remove_definitions("-DWASM_ENABLE_JIT=1")
-faasm_private_lib(wamrlib "${WAMR_RUNTIME_LIB_SOURCE}")
+add_definitions(-DWASM_ENABLE_WAMR_COMPILER=1)
 
 # Disable WAMR warnings
-target_compile_options(wamrlib PRIVATE
-    -Wno-typedef-redefinition
-    -Wno-unused-command-line-argument
-    # We comment out some problematic LLVM code in WAMR. Commenting out triggers
-    # compilation warnings that we suppress
-    -Wno-ambiguous-reversed-operator
-    -Wno-unused-function
-    -Wno-deprecated-enum-enum-conversion
-)
+# target_compile_options(wamrlib PRIVATE
+#     -Wno-typedef-redefinition
+#     -Wno-unused-command-line-argument
+#     # We comment out some problematic LLVM code in WAMR. Commenting out triggers
+#     # compilation warnings that we suppress
+#     -Wno-ambiguous-reversed-operator
+#     -Wno-unused-function
+#     -Wno-deprecated-enum-enum-conversion
+# )
 
-# -----------------------------
-# Faasm-specific configuration
-# -----------------------------
+# # -----------------------------
+# # Faasm-specific configuration
+# # -----------------------------
 
-target_include_directories(wamrlib PUBLIC
-    ${PLATFORM_SHARED_DIR}
-)
-
+include_directories(${PLATFORM_SHARED_DIR})
+include_directories(${WAMR_ROOT_DIR}/core/iwasm/include ${WAMR_ROOT_DIR}/core/iwasm/common ${WAMR_ROOT_DIR}/core/iwasm/libraries ${WAMR_ROOT_DIR}/core/iwasm/compilation ${WAMR_ROOT_DIR}/core/iwasm/aot ${WAMR_ROOT_DIR}/core/iwasm/interpreter ${WAMR_ROOT_DIR}/core/shared/utils ${WAMR_ROOT_DIR}/core/iwasm/libraries/libc-wasi/sandboxed-system-primitives/include/ ${WAMR_ROOT_DIR}/core/shared/platform/include)
 # Link the specific LLVM libraries that WAMR needs
 llvm_map_components_to_libnames(
     WAMR_LLVM_LIBRARIES
@@ -93,5 +87,6 @@ faasm_private_lib(wamrmodule
 target_link_libraries(wamrmodule PUBLIC
     faasm::wasm
     faasm::wamrlib
+    MVVM_export
     ${WAMR_LLVM_LIBRARIES}
 )

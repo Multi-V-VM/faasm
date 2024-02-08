@@ -1,3 +1,4 @@
+#include "wamr.h"
 #include <faabric/util/files.h>
 #include <faabric/util/locks.h>
 #include <faabric/util/logging.h>
@@ -21,7 +22,7 @@
 #include <wasm_export.h>
 
 #define NO_WASM_FUNC_PTR -1
-
+extern WAMRInstance* wamr;
 namespace wasm {
 // The high level API for WAMR can be found here:
 // https://github.com/bytecodealliance/wasm-micro-runtime/blob/main/core/iwasm/include/wasm_export.h
@@ -39,7 +40,7 @@ void WAMRWasmModule::initialiseWAMRGlobally()
     if (wamrInitialised) {
         return;
     }
-
+    
     // Initialise WAMR runtime
     RuntimeInitArgs initArgs;
     memset(&initArgs, 0, sizeof(RuntimeInitArgs));
@@ -328,12 +329,14 @@ bool WAMRWasmModule::executeCatchException(WASMFunctionInstanceCommon* func,
         if (execEnv != nullptr) {
             wasm_runtime_destroy_exec_env(execEnv);
         }
-        wasm_runtime_set_exec_env_tls(nullptr);
+        // wasm_runtime_set_exec_env_tls(nullptr);
     };
 
     // Create an execution environment
     std::unique_ptr<WASMExecEnv, decltype(execEnvDtor)> execEnv(
       wasm_exec_env_create(moduleInstance, STACK_SIZE_KB), execEnvDtor);
+    wamr_ = wamr = new WAMRInstance(execEnv.get(),false);
+      
     if (execEnv == nullptr) {
         throw std::runtime_error("Error creating execution environment");
     }
@@ -391,21 +394,8 @@ void WAMRWasmModule::doThrowException(std::exception& e)
     // the setjmp/longjmp mechanism to catch C++ exceptions only lets us
     // change the return value of setjmp, but we can't propagate the string
     // associated to the exception
-    if (dynamic_cast<faabric::util::FunctionMigratedException*>(&e) !=
-        nullptr) {
-        // Make sure to explicitly call the exceptions destructor explicitly
-        // to avoid memory leaks when longjmp-ing
-        e.~exception();
-        longjmp(wamrExceptionJmpBuf,
-                WAMRExceptionTypes::FunctionMigratedException);
-    } else if (dynamic_cast<faabric::util::QueueTimeoutException*>(&e) !=
-               nullptr) {
-        e.~exception();
-        longjmp(wamrExceptionJmpBuf, WAMRExceptionTypes::QueueTimeoutException);
-    } else {
         e.~exception();
         longjmp(wamrExceptionJmpBuf, WAMRExceptionTypes::DefaultException);
-    }
 }
 
 // -----

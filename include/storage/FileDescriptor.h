@@ -5,6 +5,7 @@
 #include <string>
 #include <unordered_map>
 #include <vector>
+#include <stdint.h>
 
 // See wasi-libc/libc-bottom-half/cloudlibc/src/libc/fcntl/openat.c
 // The values used here are taken from WAVM, these must match with the values in
